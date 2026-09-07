@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Local virtual environments
+.venv/
+venv/
+
+# Generated data & model artifacts (regenerate via `make pipeline`; Render
+# rebuilds them at deploy time per render.yaml's buildCommand).
+data/processed/*.parquet
+models/*.joblib
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

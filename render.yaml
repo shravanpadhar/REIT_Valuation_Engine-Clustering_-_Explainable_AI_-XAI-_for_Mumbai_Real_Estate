@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: reit-valuation-engine
+    runtime: python
+    plan: starter
+    region: singapore
+    branch: main
+    buildCommand: >-
+      pip install --upgrade pip &&
+      pip install -r requirements.txt &&
+      python -m src.data_pipeline &&
+      python -m src.clustering &&
+      python -m src.valuation_model --trials 12
+    startCommand: >-
+      streamlit run app/app.py
+      --server.port $PORT
+      --server.address 0.0.0.0
+      --server.headless true
+      --browser.gatherUsageStats false
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.14
+      - key: OPTUNA_TRIALS
+        value: "12"
+    autoDeploy: true
+    healthCheckPath: /_stcore/health
