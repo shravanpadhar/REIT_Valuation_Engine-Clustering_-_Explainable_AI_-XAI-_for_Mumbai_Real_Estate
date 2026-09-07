@@ -7,10 +7,13 @@ __pycache__/
 .venv/
 venv/
 
-# Generated data & model artifacts (regenerate via `make pipeline`; Render
-# rebuilds them at deploy time per render.yaml's buildCommand).
-data/processed/*.parquet
-models/*.joblib
+# Generated data & model artifacts are committed on purpose: Render's free
+# tier has limited build minutes/RAM/CPU, so retraining LightGBM/XGBoost/
+# Optuna on every deploy risks build timeouts or OOM. Regenerate locally via
+# `make pipeline` when the source data or feature engineering changes, then
+# commit the refreshed files.
+# data/processed/*.parquet
+# models/*.joblib
 
 # OS / editor
 .DS_Store

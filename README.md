@@ -148,29 +148,31 @@ streamlit run app/app.py
 lowers the Optuna search budget for faster iteration or constrained build
 environments.
 
-## 5. Deployment on Render.com
+## 5. Deployment on Render.com (free tier)
 
-This repo ships a `render.yaml` **Blueprint** that defines a single Python
-web service:
+This repo ships a `render.yaml` **Blueprint** targeting Render's `free`
+instance type. Because free instances have limited build minutes, CPU, and
+RAM, the deploy strategy is **train once locally, commit the artifacts,
+serve them** rather than retraining on every build:
 
-1. Push this repo to GitHub/GitLab.
-2. In Render, choose **New > Blueprint** and point it at the repo (Render
+1. Run `make pipeline` locally (or after any change to the source data /
+   feature engineering) and commit the refreshed `data/processed/*.parquet`
+   and `models/*.joblib` files -- they are intentionally *not* gitignored.
+2. Push this repo to GitHub.
+3. In Render, choose **New > Blueprint** and point it at the repo (Render
    auto-detects `render.yaml`).
-3. Build step installs dependencies and re-runs the full offline pipeline
-   (`data_pipeline` → `clustering` → `valuation_model --trials 12`) so the
-   deployed instance always serves freshly trained artifacts — Render's
-   filesystem is ephemeral per-deploy, so retraining at build time (rather
-   than committing large binary joblib files to git) is the reliable path.
-4. Start command launches Streamlit bound to Render's `$PORT`:
+4. Build step is just `pip install -r requirements.txt` -- fast and light,
+   well within free-tier build limits.
+5. Start command launches Streamlit bound to Render's `$PORT`:
    `streamlit run app/app.py --server.port $PORT --server.address 0.0.0.0`.
-5. First deploy takes longer (full pipeline + a light Optuna search);
-   subsequent deploys only re-run if you push new commits.
+6. Free instances spin down after inactivity, so the first request after an
+   idle period takes ~30-60s to wake up -- expected behavior, not a bug.
 
-If your dataset changes rarely and you'd rather not retrain on every deploy,
-remove the `python -m src.data_pipeline && ... && ...` chain from
-`buildCommand`, commit the generated `data/processed/` and `models/` files
-directly (drop their patterns from `.gitignore` first), and let the build
-step be just `pip install -r requirements.txt`.
+If you'd rather retrain fresh on every deploy (e.g. on a paid plan with more
+build/RAM headroom), change `buildCommand` back to
+`pip install -r requirements.txt && python -m src.data_pipeline && python -m src.clustering && python -m src.valuation_model --trials 12`
+and re-add the `data/processed/*.parquet` / `models/*.joblib` patterns to
+`.gitignore`.
 
 ## 6. Testing
 
